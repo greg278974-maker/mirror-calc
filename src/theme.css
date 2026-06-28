@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --panel: #211b1c;
+  --line:  #3a2f31;
+  --wine:  #8d2233;
+  --wine2: #5d1622;
+  --wine-soft: #b5455a;
+  --ink:  #f3ece9;
+  --muted: #a99a96;
+  --muted2: #7c6f6c;
+  --good:  #7fae6a;
+  --field: #1b1516;
+  --radius: 10px;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: #171313;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.app-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 780px) {
+  .app-grid { grid-template-columns: 1fr; }
+}
+
+:focus-visible { outline: 2px solid var(--wine-soft); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
