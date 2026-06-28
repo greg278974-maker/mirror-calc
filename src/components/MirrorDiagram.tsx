@@ -7,8 +7,8 @@ interface Props {
   geom: Geometry
 }
 
-const PAD = 30    // label padding in cm (= SVG units)
-const JOINT = 0.3 // tile grout width in cm
+const PAD = 30    // label padding in mm (= SVG units; outW/outH are now mm)
+const JOINT = 2   // tile grout width in mm
 
 export function MirrorDiagram({ params, settings, geom }: Props) {
   const { outW, outH, mirW, mirH } = params
@@ -41,21 +41,25 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
   const bInnerPath   = `M ${bIx} ${bIy} h ${bandInnerW} v ${bandInnerH} h ${-bandInnerW} Z`
   const mirPath      = `M ${mx} ${my} h ${mirW} v ${mirH} h ${-mirW} Z`
 
+  // Convert tile size from cm to mm for SVG (all SVG units are now mm)
+  const tileWmm = tileW * 10
+  const tileHmm = tileH * 10
+
   // Tile grid covering the band-outer bounding rect
-  const cols = tileW > 0 ? Math.ceil(bandOuterW / tileW) : 0
-  const rows = tileH > 0 ? Math.ceil(bandOuterH / tileH) : 0
+  const cols = tileWmm > 0 ? Math.ceil(bandOuterW / tileWmm) : 0
+  const rows = tileHmm > 0 ? Math.ceil(bandOuterH / tileHmm) : 0
   const tileRects: React.ReactElement[] = []
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const tx = bOx + c * tileW
-      const ty = bOy + r * tileH
+      const tx = bOx + c * tileWmm
+      const ty = bOy + r * tileHmm
       const shade = (r + c) % 2 === 0 ? '#c8a86c' : '#b89558'
       tileRects.push(
         <rect key={`${r}-${c}`}
           x={tx + JOINT / 2} y={ty + JOINT / 2}
-          width={Math.max(0, tileW - JOINT)}
-          height={Math.max(0, tileH - JOINT)}
-          fill={shade} rx={0.4}
+          width={Math.max(0, tileWmm - JOINT)}
+          height={Math.max(0, tileHmm - JOINT)}
+          fill={shade} rx={2}
         />
       )
     }
@@ -173,7 +177,7 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
 
         {/* Bottom: tile count note */}
         <text x={vbW / 2} y={oy + outH + 13} textAnchor="middle" style={noteTxt}>
-          {`бордюр ${(bandArea / 10000).toFixed(3)} м² → ${tiles} плиток`}
+          {`бордюр ${(bandArea / 1_000_000).toFixed(4)} м² → ${tiles} плиток`}
         </text>
       </svg>
     </div>

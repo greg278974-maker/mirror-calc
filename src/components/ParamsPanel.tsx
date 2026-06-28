@@ -73,16 +73,16 @@ export function ParamsPanel({ params, settings, geom, onChange }: Props) {
       <p style={eyebrow}>Параметры изделия</p>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-        <NumField label="Наружный — ширина" value={params.outW} unit="см"
+        <NumField label="Наружный — ширина" value={params.outW} unit="мм"
           onChange={v => set({ outW: v })} />
-        <NumField label="Наружный — высота" value={params.outH} unit="см"
+        <NumField label="Наружный — высота" value={params.outH} unit="мм"
           onChange={v => set({ outH: v })} />
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-        <NumField label="Зеркало — ширина" value={params.mirW} unit="см"
+        <NumField label="Зеркало — ширина" value={params.mirW} unit="мм"
           onChange={v => set({ mirW: v })} />
-        <NumField label="Зеркало — высота" value={params.mirH} unit="см"
+        <NumField label="Зеркало — высота" value={params.mirH} unit="мм"
           onChange={v => set({ mirH: v })} />
       </div>
 

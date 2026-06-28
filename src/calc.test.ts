@@ -2,42 +2,44 @@ import { describe, it, expect } from 'vitest';
 import { calcGeometry, calcCost } from './calc';
 import { DEFAULT_PARAMS, DEFAULT_SETTINGS, type OrderParams, type Settings } from './state';
 
+// Defaults: outW=600mm, outH=600mm, mirW=300mm, mirH=300mm
+// frameOut=50mm, frameIn=20mm, tileW=10cm, tileH=10cm
 const P = DEFAULT_PARAMS;
 const S = DEFAULT_SETTINGS;
 
 describe('calcGeometry', () => {
   it('computes mirror area in m²', () => {
     const g = calcGeometry(P, S);
-    expect(g.mirArea).toBeCloseTo((30 * 30) / 10000); // 0.09
+    expect(g.mirArea).toBeCloseTo((300 * 300) / 1_000_000); // 0.09 m²
   });
 
   it('computes base area in m²', () => {
     const g = calcGeometry(P, S);
-    expect(g.baseArea).toBeCloseTo((60 * 60) / 10000); // 0.36
+    expect(g.baseArea).toBeCloseTo((600 * 600) / 1_000_000); // 0.36 m²
   });
 
   it('computes outer perimeter in lin.m', () => {
     const g = calcGeometry(P, S);
-    expect(g.perimOut).toBeCloseTo(2 * (60 + 60) / 100); // 2.4
+    expect(g.perimOut).toBeCloseTo(2 * (600 + 600) / 1000); // 2.4 m
   });
 
   it('computes inner perimeter in lin.m', () => {
     const g = calcGeometry(P, S);
-    expect(g.perimIn).toBeCloseTo(2 * (30 + 30) / 100); // 1.2
+    expect(g.perimIn).toBeCloseTo(2 * (300 + 300) / 1000); // 1.2 m
   });
 
   it('computes band area correctly', () => {
-    // fo = 50/10 = 5cm, fi = 20/10 = 2cm
-    // bandOuterW = 60 - 2*5 = 50, bandOuterH = 50
-    // bandInnerW = 30 + 2*2 = 34, bandInnerH = 34
-    // bandArea = 50*50 - 34*34 = 2500 - 1156 = 1344 cm²
+    // fo=50mm, fi=20mm
+    // bandOuterW = 600 - 2*50 = 500mm, bandOuterH = 500mm
+    // bandInnerW = 300 + 2*20 = 340mm, bandInnerH = 340mm
+    // bandArea = 500*500 - 340*340 = 250000 - 115600 = 134400 mm²
     const g = calcGeometry(P, S);
-    expect(g.bandArea).toBeCloseTo(1344);
+    expect(g.bandArea).toBeCloseTo(134400);
   });
 
-  it('computes auto tiles (ceiling of band/tile)', () => {
-    // tileArea = 10*10 = 100 cm², bandArea = 1344
-    // autoTiles = ceil(1344/100) = 14
+  it('computes auto tiles (ceiling of band/tileArea)', () => {
+    // tileArea = 10cm*10cm = 100cm² = 10000mm²
+    // autoTiles = ceil(134400 / 10000) = ceil(13.44) = 14
     const g = calcGeometry(P, S);
     expect(g.autoTiles).toBe(14);
   });
@@ -54,7 +56,8 @@ describe('calcGeometry', () => {
   });
 
   it('bandArea is 0 when mirror+frame fills outer', () => {
-    const params: OrderParams = { ...P, mirW: 60, mirH: 60 };
+    // mirW = outW = 600mm → bandInnerW = 640 > bandOuterW = 500 → bandArea = 0
+    const params: OrderParams = { ...P, mirW: 600, mirH: 600 };
     const g = calcGeometry(params, S);
     expect(g.bandArea).toBe(0);
   });
@@ -65,10 +68,10 @@ describe('calcGeometry', () => {
     expect(g.autoTiles).toBe(0);
   });
 
-  it('exposes frame dimensions in cm', () => {
+  it('exposes frame dimensions in mm', () => {
     const g = calcGeometry(P, S);
-    expect(g.fo).toBeCloseTo(5);  // 50mm -> 5cm
-    expect(g.fi).toBeCloseTo(2);  // 20mm -> 2cm
+    expect(g.fo).toBeCloseTo(50); // frameOut=50mm
+    expect(g.fi).toBeCloseTo(20); // frameIn=20mm
   });
 });
 

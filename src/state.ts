@@ -1,8 +1,8 @@
 export interface OrderParams {
-  outW: number;        // cm
-  outH: number;        // cm
-  mirW: number;        // cm
-  mirH: number;        // cm
+  outW: number;        // mm
+  outH: number;        // mm
+  mirW: number;        // mm
+  mirH: number;        // mm
   tileMode: 'auto' | 'manual';
   tilesManual: number;
   inclDeliv: boolean;
@@ -30,10 +30,10 @@ export interface Settings {
 }
 
 export const DEFAULT_PARAMS: OrderParams = {
-  outW: 60,
-  outH: 60,
-  mirW: 30,
-  mirH: 30,
+  outW: 600,
+  outH: 600,
+  mirW: 300,
+  mirH: 300,
   tileMode: 'auto',
   tilesManual: 0,
   inclDeliv: false,

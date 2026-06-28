@@ -31,22 +31,25 @@ export interface CostResult {
 }
 
 export function calcGeometry(params: OrderParams, settings: Settings): Geometry {
-  const fo = settings.frameOut / 10;
-  const fi = settings.frameIn / 10;
+  // outW/outH/mirW/mirH are in mm; frameOut/frameIn already in mm
+  const fo = settings.frameOut;  // mm
+  const fi = settings.frameIn;   // mm
 
-  const mirArea = (params.mirW * params.mirH) / 10000;
-  const baseArea = (params.outW * params.outH) / 10000;
-  const perimOut = 2 * (params.outW + params.outH) / 100;
-  const perimIn = 2 * (params.mirW + params.mirH) / 100;
+  const mirArea  = (params.mirW * params.mirH) / 1_000_000;    // mm² → m²
+  const baseArea = (params.outW * params.outH) / 1_000_000;    // mm² → m²
+  const perimOut = 2 * (params.outW + params.outH) / 1000;     // mm → m
+  const perimIn  = 2 * (params.mirW + params.mirH) / 1000;     // mm → m
 
+  // Band dimensions in mm
   const bandOuterW = Math.max(0, params.outW - 2 * fo);
   const bandOuterH = Math.max(0, params.outH - 2 * fo);
   const bandInnerW = params.mirW + 2 * fi;
   const bandInnerH = params.mirH + 2 * fi;
-  const bandArea = Math.max(0, bandOuterW * bandOuterH - bandInnerW * bandInnerH);
+  const bandArea = Math.max(0, bandOuterW * bandOuterH - bandInnerW * bandInnerH); // mm²
 
-  const tileArea = settings.tileW * settings.tileH;
-  const autoTiles = tileArea > 0 ? Math.ceil(bandArea / tileArea) : 0;
+  // tileW/tileH are in cm → convert to mm for area comparison
+  const tileAreaMm2 = settings.tileW * settings.tileH * 100;   // cm² → mm²
+  const autoTiles = tileAreaMm2 > 0 ? Math.ceil(bandArea / tileAreaMm2) : 0;
   const tiles = params.tileMode === 'auto' ? autoTiles : params.tilesManual;
 
   return {

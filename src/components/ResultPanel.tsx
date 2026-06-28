@@ -116,9 +116,9 @@ export function ResultPanel({ cost, geom }: Props) {
         <TotLine label="Себестоимость" value={cost.productCost} bold />
 
         <div style={{ marginTop: 14, fontSize: 11, color: 'var(--muted2)', lineHeight: 1.5 }}>
-          {`Зеркало ${geom.mirArea.toFixed(2)} м² · `}
-          {`периметр рамы ${geom.perimOut.toFixed(2)} пог.м · `}
-          {`бордюр ${(geom.bandArea / 10000).toFixed(3)} м² → ${geom.tiles} плиток`}
+          {`Зеркало ${geom.mirArea.toFixed(4)} м² · `}
+          {`периметр рамы ${geom.perimOut.toFixed(3)} пог.м · `}
+          {`бордюр ${(geom.bandArea / 1_000_000).toFixed(4)} м² → ${geom.tiles} плиток`}
         </div>
       </section>
     </>
