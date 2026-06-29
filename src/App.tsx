@@ -1,11 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { DEFAULT_SETTINGS, type OrderParams, type Settings } from './state'
 import { calcGeometry, calcCost } from './calc'
+import { buildClientQuote } from './clientQuote'
 import { loadSettings, saveSettings, loadParams, saveParams } from './storage'
 import { ParamsPanel } from './components/ParamsPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { MirrorDiagram } from './components/MirrorDiagram'
+import { ClientExport } from './components/ClientExport'
 
 export default function App() {
   const [params, setParams] = useState<OrderParams>(loadParams)
@@ -35,8 +37,11 @@ export default function App() {
     clearTimeout(paramsTimer.current)
   }, [])
 
+  const svgRef = useRef<SVGSVGElement>(null)
+
   const geom = calcGeometry(params, settings)
   const cost = calcCost(params, settings, geom)
+  const quote = buildClientQuote(params, settings, geom, cost)
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '22px 18px 60px' }}>
@@ -92,7 +97,8 @@ export default function App() {
         {/* RIGHT */}
         <div style={{ position: 'sticky', top: 16 }}>
           <ResultPanel cost={cost} geom={geom} />
-          <MirrorDiagram params={params} settings={settings} geom={geom} />
+          <MirrorDiagram params={params} settings={settings} geom={geom} svgRef={svgRef} />
+          <ClientExport quote={quote} svgRef={svgRef} />
         </div>
       </div>
     </div>

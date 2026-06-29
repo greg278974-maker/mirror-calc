@@ -5,12 +5,13 @@ interface Props {
   params: OrderParams
   settings: Settings
   geom: Geometry
+  svgRef?: React.Ref<SVGSVGElement>
 }
 
 const PAD = 40    // annotation margin in mm (SVG units = mm)
 const JOINT = 2   // tile grout width in mm
 
-export function MirrorDiagram({ params, settings, geom }: Props) {
+export function MirrorDiagram({ params, settings, geom, svgRef }: Props) {
   const { outW, outH } = params
   const { tileW, tileH } = settings
   const { mirW, mirH, fo, bandOuterW, bandOuterH, bandInnerW, bandInnerH, bandArea, tiles } = geom
@@ -98,7 +99,7 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
         Схема изделия
       </p>
 
-      <svg viewBox={`0 0 ${vbW} ${vbH}`} style={{ width: '100%', display: 'block' }}
+      <svg ref={svgRef} viewBox={`0 0 ${vbW} ${vbH}`} style={{ width: '100%', display: 'block' }}
         aria-label="Схема зеркала-панно">
         <defs>
           <mask id="tile-band-mask">
