@@ -151,9 +151,10 @@ export async function exportClientPdf(
   if (quote.work > 0) totalLine('Работа', quote.work);
   if (quote.delivery > 0) totalLine('Доставка', quote.delivery);
   if (quote.montage > 0) totalLine('Монтаж', quote.montage);
-  totalLine('Итого', quote.total, true, 12);
 
-  y += 1;
+  // Single client-facing total: the rounded "К оплате". No exact subtotal and
+  // no "rounding" wording — the client just sees one clean figure.
+  y += 3;
   doc.setFillColor(44, 33, 34);
   doc.roundedRect(M, y, right - M, 13, 2, 2, 'F');
   doc.setFont('Roboto', 'bold');
