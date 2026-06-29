@@ -83,6 +83,7 @@ export function ResultPanel({ cost, geom }: Props) {
       <section style={{ ...panel, marginBottom: 14 }}>
         <p style={eyebrow}>Состав заказа</p>
         <TotLine label="Изделие" value={cost.productClient} />
+        {cost.work > 0 && <TotLine label="Работа" value={cost.work} />}
         {cost.delivery > 0 && <TotLine label="Доставка" value={cost.delivery} />}
         {cost.montage > 0 && <TotLine label="Монтаж" value={cost.montage} />}
         <div style={{ borderTop: '1px solid var(--line)', marginTop: 6, paddingTop: 8 }}>

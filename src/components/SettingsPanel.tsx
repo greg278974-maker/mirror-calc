@@ -107,6 +107,9 @@ export function SettingsPanel({ settings, onChange }: Props) {
           <p style={subhead}>Размер плитки</p>
           <Row>{f('tileW', 'Ширина', 'см', 1)}{f('tileH', 'Высота', 'см', 1)}</Row>
 
+          <p style={subhead}>Работа</p>
+          <Row>{f('pWorkBase', 'База (за заказ)', '₸', 100)}{f('pWorkM2', 'За м²', '₸/м²', 100)}</Row>
+
           <p style={subhead}>Доп. услуги</p>
           <Row>{f('pDeliv', 'Доставка', '₸', 100)}{f('pInst', 'Монтаж', '₸', 100)}</Row>
 

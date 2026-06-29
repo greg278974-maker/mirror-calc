@@ -23,6 +23,8 @@ export interface Settings {
   tileH: number;     // cm
   pDeliv: number;    // ₸
   pInst: number;     // ₸
+  pWorkBase: number; // ₸ flat, per order
+  pWorkM2: number;   // ₸/m² of panel area
   wastePct: number;  // %
   markupPct: number; // %
 }
@@ -52,6 +54,8 @@ export const DEFAULT_SETTINGS: Settings = {
   tileH: 10,
   pDeliv: 2000,
   pInst: 3000,
+  pWorkBase: 5000,
+  pWorkM2: 8000,
   wastePct: 10,
   markupPct: 100,
 };

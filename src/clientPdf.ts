@@ -148,6 +148,7 @@ export async function exportClientPdf(
   };
 
   totalLine('Изделие', quote.productClient);
+  if (quote.work > 0) totalLine('Работа', quote.work);
   if (quote.delivery > 0) totalLine('Доставка', quote.delivery);
   if (quote.montage > 0) totalLine('Монтаж', quote.montage);
   totalLine('Итого', quote.total, true, 12);

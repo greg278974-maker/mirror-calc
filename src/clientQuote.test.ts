@@ -49,12 +49,18 @@ describe('buildClientQuote', () => {
     expect(q.lines.some(l => l.name === 'Еврокромка')).toBe(true);
   });
 
-  it('total = productClient + delivery + montage', () => {
+  it('total = productClient + work + delivery + montage', () => {
     const params: OrderParams = { ...P, inclDeliv: true, inclInst: true };
     const { q } = quote(params);
     expect(q.delivery).toBe(S.pDeliv);
     expect(q.montage).toBe(S.pInst);
-    expect(q.total).toBe(q.productClient + q.delivery + q.montage);
+    expect(q.total).toBe(q.productClient + q.work + q.delivery + q.montage);
+  });
+
+  it('includes labour from cost in the quote', () => {
+    const { q, c } = quote();
+    expect(q.work).toBe(Math.round(c.work));
+    expect(q.work).toBeGreaterThan(0);
   });
 
   it('totalRounded is a multiple of 500 and >= total', () => {

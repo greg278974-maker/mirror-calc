@@ -11,9 +11,10 @@ export interface ClientQuote {
   mirrorSize: string;  // "260×260 мм"
   lines: QuoteLine[];  // materials at client price, zero lines dropped
   productClient: number; // sum of line amounts ("Изделие")
+  work: number;
   delivery: number;
   montage: number;
-  total: number;        // productClient + delivery + montage
+  total: number;        // productClient + work + delivery + montage
   totalRounded: number; // total rounded up to nearest 500 ₸
 }
 
@@ -37,9 +38,10 @@ export function buildClientQuote(
 
   // Subtotal is the sum of the rounded lines so the printed column reconciles.
   const productClient = lines.reduce((a, l) => a + l.amount, 0);
+  const work = Math.round(cost.work);
   const delivery = cost.delivery;
   const montage = cost.montage;
-  const total = productClient + delivery + montage;
+  const total = productClient + work + delivery + montage;
   const totalRounded = Math.ceil(total / 500) * 500;
 
   return {
@@ -47,6 +49,7 @@ export function buildClientQuote(
     mirrorSize: `${geom.mirW}×${geom.mirH} мм`,
     lines,
     productClient,
+    work,
     delivery,
     montage,
     total,

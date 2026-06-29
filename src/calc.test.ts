@@ -139,12 +139,32 @@ describe('calcCost', () => {
     expect(r.productClient).toBeCloseTo(r.productCost * (1 + S.markupPct / 100));
   });
 
+  it('computes labour as base + area rate', () => {
+    const g = calcGeometry(P, S);
+    const r = calcCost(P, S, g);
+    expect(r.work).toBeCloseTo(S.pWorkBase + g.baseArea * S.pWorkM2);
+  });
+
+  it('includes labour in totalClient', () => {
+    const g = calcGeometry(P, S);
+    const r = calcCost(P, S, g);
+    expect(r.totalClient).toBeCloseTo(r.productClient + r.work + r.delivery + r.montage);
+  });
+
+  it('labour does not affect product profit/margin', () => {
+    const g = calcGeometry(P, S);
+    const withWork = calcCost(P, S, g);
+    const noWork = calcCost(P, { ...S, pWorkBase: 0, pWorkM2: 0 }, g);
+    expect(withWork.profit).toBeCloseTo(noWork.profit);
+    expect(withWork.margin).toBeCloseTo(noWork.margin);
+  });
+
   it('adds delivery when inclDeliv=true', () => {
     const params: OrderParams = { ...P, inclDeliv: true };
     const g = calcGeometry(params, S);
     const r = calcCost(params, S, g);
     expect(r.delivery).toBe(S.pDeliv);
-    expect(r.totalClient).toBeCloseTo(r.productClient + S.pDeliv);
+    expect(r.totalClient).toBeCloseTo(r.productClient + r.work + S.pDeliv);
   });
 
   it('does not add delivery when inclDeliv=false', () => {

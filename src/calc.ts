@@ -29,6 +29,7 @@ export interface CostResult {
   wasteAmt: number;
   productCost: number;
   productClient: number;
+  work: number;
   delivery: number;
   montage: number;
   totalClient: number;
@@ -98,9 +99,12 @@ export function calcCost(
   const productCost = matSub + wasteAmt;
   const productClient = productCost * (1 + settings.markupPct / 100);
 
+  // Labour: flat per-order base plus a rate per m² of panel area.
+  const work = settings.pWorkBase + geom.baseArea * settings.pWorkM2;
+
   const delivery = params.inclDeliv ? settings.pDeliv : 0;
   const montage  = params.inclInst  ? settings.pInst  : 0;
-  const totalClient = productClient + delivery + montage;
+  const totalClient = productClient + work + delivery + montage;
 
   const profit = productClient - productCost;
   const margin = productClient > 0 ? profit / productClient * 100 : 0;
@@ -108,6 +112,6 @@ export function calcCost(
 
   return {
     mat, matSub, wasteAmt, productCost, productClient,
-    delivery, montage, totalClient, profit, margin, totalRounded,
+    work, delivery, montage, totalClient, profit, margin, totalRounded,
   };
 }
