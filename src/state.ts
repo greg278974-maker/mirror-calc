@@ -1,10 +1,7 @@
 export interface OrderParams {
   outW: number;        // mm
   outH: number;        // mm
-  mirW: number;        // mm
-  mirH: number;        // mm
-  tileMode: 'auto' | 'manual';
-  tilesManual: number;
+  tileRows: number;    // rows of tiles per side in the border
   inclDeliv: boolean;
   inclInst: boolean;
 }
@@ -14,6 +11,7 @@ export interface Settings {
   pTile: number;     // ₸/pc
   pBagOut: number;   // ₸/lin.m
   pBagIn: number;    // ₸/lin.m
+  pEuroEdge: number; // ₸/lin.m
   pBase: number;     // ₸/m²
   pPaint: number;    // ₸ flat
   pGlue: number;     // ₸ flat
@@ -32,10 +30,7 @@ export interface Settings {
 export const DEFAULT_PARAMS: OrderParams = {
   outW: 600,
   outH: 600,
-  mirW: 300,
-  mirH: 300,
-  tileMode: 'auto',
-  tilesManual: 0,
+  tileRows: 1,
   inclDeliv: false,
   inclInst: false,
 };
@@ -45,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pTile: 800,
   pBagOut: 1500,
   pBagIn: 700,
+  pEuroEdge: 500,
   pBase: 2500,
   pPaint: 600,
   pGlue: 500,

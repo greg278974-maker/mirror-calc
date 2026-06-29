@@ -2,15 +2,23 @@ import { describe, it, expect } from 'vitest';
 import { calcGeometry, calcCost } from './calc';
 import { DEFAULT_PARAMS, DEFAULT_SETTINGS, type OrderParams, type Settings } from './state';
 
-// Defaults: outW=600mm, outH=600mm, mirW=300mm, mirH=300mm
-// frameOut=50mm, frameIn=20mm, tileW=10cm, tileH=10cm
+// Defaults: outW=600mm, outH=600mm, tileRows=1
+// frameOut=50mm, frameIn=20mm, tileW=10cm(100mm), tileH=10cm(100mm)
+// → mirW = mirH = 600 - 2*50 - 2*1*100 - 2*20 = 260mm
 const P = DEFAULT_PARAMS;
 const S = DEFAULT_SETTINGS;
 
 describe('calcGeometry', () => {
+  it('computes derived mirror size from outer size and tile rows', () => {
+    const g = calcGeometry(P, S);
+    // mirW = 600 - 2*50 - 2*100 - 2*20 = 260
+    expect(g.mirW).toBe(260);
+    expect(g.mirH).toBe(260);
+  });
+
   it('computes mirror area in m²', () => {
     const g = calcGeometry(P, S);
-    expect(g.mirArea).toBeCloseTo((300 * 300) / 1_000_000); // 0.09 m²
+    expect(g.mirArea).toBeCloseTo((260 * 260) / 1_000_000); // 0.0676 m²
   });
 
   it('computes base area in m²', () => {
@@ -25,41 +33,49 @@ describe('calcGeometry', () => {
 
   it('computes inner perimeter in lin.m', () => {
     const g = calcGeometry(P, S);
-    expect(g.perimIn).toBeCloseTo(2 * (300 + 300) / 1000); // 1.2 m
+    expect(g.perimIn).toBeCloseTo(2 * (260 + 260) / 1000); // 1.04 m
   });
 
   it('computes band area correctly', () => {
-    // fo=50mm, fi=20mm
     // bandOuterW = 600 - 2*50 = 500mm, bandOuterH = 500mm
-    // bandInnerW = 300 + 2*20 = 340mm, bandInnerH = 340mm
-    // bandArea = 500*500 - 340*340 = 250000 - 115600 = 134400 mm²
+    // mirW=260 → bandInnerW = 260 + 2*20 = 300mm, bandInnerH = 300mm
+    // bandArea = 500*500 - 300*300 = 250000 - 90000 = 160000 mm²
     const g = calcGeometry(P, S);
-    expect(g.bandArea).toBeCloseTo(134400);
+    expect(g.bandArea).toBeCloseTo(160000);
   });
 
   it('computes auto tiles (ceiling of band/tileArea)', () => {
-    // tileArea = 10cm*10cm = 100cm² = 10000mm²
-    // autoTiles = ceil(134400 / 10000) = ceil(13.44) = 14
+    // tileArea = 100mm * 100mm = 10000mm²
+    // autoTiles = ceil(160000 / 10000) = 16
     const g = calcGeometry(P, S);
-    expect(g.autoTiles).toBe(14);
+    expect(g.autoTiles).toBe(16);
+    expect(g.tiles).toBe(16);
   });
 
-  it('uses manual tile count when tileMode=manual', () => {
-    const params: OrderParams = { ...P, tileMode: 'manual', tilesManual: 20 };
+  it('inner frame edge aligns with tile grid (tileRows=2)', () => {
+    const params: OrderParams = { ...P, tileRows: 2 };
     const g = calcGeometry(params, S);
-    expect(g.tiles).toBe(20);
+    // mirW = 600 - 100 - 400 - 40 = 60
+    expect(g.mirW).toBe(60);
+    // bandInnerW = 60 + 40 = 100; bandOuterW = 500
+    // inner frame starts exactly at 2 tile widths from band outer edge: fo + 2*100 = 250 from each side
+    expect(g.bandInnerW).toBe(100);
   });
 
-  it('uses auto tile count when tileMode=auto', () => {
-    const g = calcGeometry(P, S);
-    expect(g.tiles).toBe(g.autoTiles);
-  });
-
-  it('bandArea is 0 when mirror+frame fills outer', () => {
-    // mirW = outW = 600mm → bandInnerW = 640 > bandOuterW = 500 → bandArea = 0
-    const params: OrderParams = { ...P, mirW: 600, mirH: 600 };
+  it('bandArea is 0 when tileRows=0 (mirror fills tile band)', () => {
+    // tileRows=0 → mirW = 600 - 100 - 0 - 40 = 460
+    // bandInnerW = 460 + 40 = 500 = bandOuterW → bandArea = 0
+    const params: OrderParams = { ...P, tileRows: 0 };
     const g = calcGeometry(params, S);
     expect(g.bandArea).toBe(0);
+  });
+
+  it('mirW clamps to 0 when tileRows is too large', () => {
+    // tileRows=3 → mirW = 600 - 100 - 600 - 40 = -140 → clamped to 0
+    const params: OrderParams = { ...P, tileRows: 3 };
+    const g = calcGeometry(params, S);
+    expect(g.mirW).toBe(0);
+    expect(g.mirH).toBe(0);
   });
 
   it('handles zero tile size without divide by zero', () => {
@@ -143,7 +159,7 @@ describe('calcCost', () => {
   });
 
   it('margin is 0 when productClient is 0', () => {
-    const params: OrderParams = { ...P, outW: 0, outH: 0, mirW: 0, mirH: 0 };
+    const params: OrderParams = { ...P, outW: 0, outH: 0 };
     const settings: Settings = { ...S, pPaint: 0, pGlue: 0, pMount: 0, pMisc: 0 };
     const g = calcGeometry(params, settings);
     const r = calcCost(params, settings, g);

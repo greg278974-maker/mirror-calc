@@ -97,9 +97,9 @@ export function SettingsPanel({ settings, onChange }: Props) {
           <p style={{ ...subhead, marginTop: 0 }}>Материалы</p>
           <Row>{f('pMirror', 'Зеркало', '₸/м²', 100)}{f('pTile', 'Декор-плитка', '₸/шт', 50)}</Row>
           <Row>{f('pBagOut', 'Багет наружный', '₸/пог.м', 100)}{f('pBagIn', 'Багет внутренний', '₸/пог.м', 100)}</Row>
-          <Row>{f('pBase', 'Основа (МДФ)', '₸/м²', 100)}{f('pPaint', 'Краска', '₸', 50)}</Row>
-          <Row>{f('pGlue', 'Клей', '₸', 50)}{f('pMount', 'Крепёж/подвес', '₸', 50)}</Row>
-          <Row>{f('pMisc', 'Прочие расходники', '₸', 50)}</Row>
+          <Row>{f('pEuroEdge', 'Еврокромка', '₸/пог.м', 50)}{f('pBase', 'Основа (МДФ)', '₸/м²', 100)}</Row>
+          <Row>{f('pPaint', 'Краска', '₸', 50)}{f('pGlue', 'Клей', '₸', 50)}</Row>
+          <Row>{f('pMount', 'Крепёж/подвес', '₸', 50)}{f('pMisc', 'Прочие расходники', '₸', 50)}</Row>
 
           <p style={subhead}>Ширина багета</p>
           <Row>{f('frameOut', 'Наружный', 'мм', 1)}{f('frameIn', 'Внутренний', 'мм', 1)}</Row>

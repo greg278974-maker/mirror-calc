@@ -7,13 +7,13 @@ interface Props {
   geom: Geometry
 }
 
-const PAD = 30    // label padding in mm (= SVG units; outW/outH are now mm)
+const PAD = 40    // annotation margin in mm (SVG units = mm)
 const JOINT = 2   // tile grout width in mm
 
 export function MirrorDiagram({ params, settings, geom }: Props) {
-  const { outW, outH, mirW, mirH } = params
+  const { outW, outH } = params
   const { tileW, tileH } = settings
-  const { fo, bandOuterW, bandOuterH, bandInnerW, bandInnerH, bandArea, tiles } = geom
+  const { mirW, mirH, fo, bandOuterW, bandOuterH, bandInnerW, bandInnerH, bandArea, tiles } = geom
 
   if (outW <= 0 || outH <= 0) return null
 
@@ -23,29 +23,25 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
   const ox = PAD
   const oy = PAD
 
-  // Band outer rect (inner edge of outer bagette)
+  // Band rects
   const bOx = PAD + fo
   const bOy = PAD + fo
-
-  // Band inner rect (outer edge of inner bagette) — centred in outer
   const bIx = PAD + (outW - bandInnerW) / 2
   const bIy = PAD + (outH - bandInnerH) / 2
 
-  // Mirror rect — centred
+  // Mirror rect
   const mx = PAD + (outW - mirW) / 2
   const my = PAD + (outH - mirH) / 2
 
-  // Paths used for filled ring shapes (fill-rule works fine on regular paths)
   const outerBoxPath = `M ${ox} ${oy} h ${outW} v ${outH} h ${-outW} Z`
   const bOuterPath   = `M ${bOx} ${bOy} h ${bandOuterW} v ${bandOuterH} h ${-bandOuterW} Z`
   const bInnerPath   = `M ${bIx} ${bIy} h ${bandInnerW} v ${bandInnerH} h ${-bandInnerW} Z`
   const mirPath      = `M ${mx} ${my} h ${mirW} v ${mirH} h ${-mirW} Z`
 
-  // Convert tile size from cm to mm for SVG (all SVG units are now mm)
+  // Convert tile size from cm to mm
   const tileWmm = tileW * 10
   const tileHmm = tileH * 10
 
-  // Tile grid covering the band-outer bounding rect
   const cols = tileWmm > 0 ? Math.ceil(bandOuterW / tileWmm) : 0
   const rows = tileHmm > 0 ? Math.ceil(bandOuterH / tileHmm) : 0
   const tileRects: React.ReactElement[] = []
@@ -65,12 +61,30 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
     }
   }
 
+  // Proportional annotation sizes — capped so they fit within PAD=40
+  const ann  = Math.min(Math.min(outW, outH) * 0.028, 26)  // base unit ~17 for 600mm panel
+  const sw   = Math.max(ann * 0.12, 1)   // stroke width ~2
+  const lgap = ann * 0.5                 // distance from panel edge to dim line
+  const tick = ann * 0.35                // half-tick length
+  const tgap = ann * 0.75               // distance from panel to text (top/bottom)
+  const rgap = ann * 1.1                // distance from panel right to rotated text centre
+  const fsDim  = ann                    // main annotation font size
+  const fsNote = ann * 0.75             // note font size
+
   const dimTxt: React.CSSProperties = {
-    fill: '#f3ece9', fontSize: 3.5, fontFamily: 'ui-monospace, monospace', fontWeight: 600,
+    fill: '#f3ece9', fontSize: fsDim, fontFamily: 'ui-monospace, monospace', fontWeight: 600,
   }
   const noteTxt: React.CSSProperties = {
-    fill: '#7c6f6c', fontSize: 3, fontFamily: 'ui-monospace, monospace',
+    fill: '#7c6f6c', fontSize: fsNote, fontFamily: 'ui-monospace, monospace',
   }
+
+  // Annotation line endpoints (top)
+  const topLineY = oy - lgap
+  const topTextY = oy - tgap
+  // Annotation line endpoints (right)
+  const rightLineX  = ox + outW + lgap
+  const rightTextX  = ox + outW + rgap
+  const rightTextCY = oy + outH / 2
 
   return (
     <div style={{
@@ -87,11 +101,6 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
       <svg viewBox={`0 0 ${vbW} ${vbH}`} style={{ width: '100%', display: 'block' }}
         aria-label="Схема зеркала-панно">
         <defs>
-          {/*
-            SVG mask is more reliable than clipPath + fillRule/clipRule across browsers.
-            White = show, Black = hide. We show the band ring by:
-              white rect over band-outer area, then black rect over band-inner area.
-          */}
           <mask id="tile-band-mask">
             <rect x={bOx} y={bOy}
               width={Math.max(0, bandOuterW)} height={Math.max(0, bandOuterH)}
@@ -110,22 +119,24 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
         {/* Dark panel background */}
         <rect x={ox} y={oy} width={outW} height={outH} fill="#1a1314" />
 
-        {/* Outer bagette: ring = outer box minus band-outer box */}
+        {/* Outer bagette ring */}
         <path fillRule="evenodd"
           d={`${outerBoxPath} ${bOuterPath}`}
           fill="#8d2233" />
 
-        {/* Tile band background (ochre base behind tiles) */}
-        <path fillRule="evenodd"
-          d={`${bOuterPath} ${bInnerPath}`}
-          fill="#7a5c32" />
+        {/* Tile band background */}
+        {bandInnerW > 0 && bandInnerH > 0 && (
+          <path fillRule="evenodd"
+            d={`${bOuterPath} ${bInnerPath}`}
+            fill="#7a5c32" />
+        )}
 
         {/* Tile grid — masked to band ring */}
         <g mask="url(#tile-band-mask)">
           {tileRects}
         </g>
 
-        {/* Inner bagette: ring = band-inner box minus mirror box */}
+        {/* Inner bagette ring */}
         {mirW > 0 && mirH > 0 && bandInnerW > 0 && bandInnerH > 0 && (
           <path fillRule="evenodd"
             d={`${bInnerPath} ${mirPath}`}
@@ -145,38 +156,51 @@ export function MirrorDiagram({ params, settings, geom }: Props) {
         {/* === Dimension annotations === */}
 
         {/* Top: outer width */}
-        <line x1={ox} y1={oy - 7} x2={ox + outW} y2={oy - 7} stroke="#5a4e50" strokeWidth={0.5} />
-        <line x1={ox}       y1={oy - 9} x2={ox}       y2={oy - 5} stroke="#5a4e50" strokeWidth={0.5} />
-        <line x1={ox + outW} y1={oy - 9} x2={ox + outW} y2={oy - 5} stroke="#5a4e50" strokeWidth={0.5} />
-        <text x={ox + outW / 2} y={oy - 10} textAnchor="middle" style={dimTxt}>
-          {outW} см
+        <line x1={ox} y1={topLineY} x2={ox + outW} y2={topLineY}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <line x1={ox}        y1={topLineY - tick} x2={ox}        y2={topLineY + tick}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <line x1={ox + outW} y1={topLineY - tick} x2={ox + outW} y2={topLineY + tick}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <text x={ox + outW / 2} y={topTextY} textAnchor="middle"
+          dominantBaseline="auto" style={dimTxt}>
+          {outW} мм
         </text>
 
         {/* Right: outer height */}
-        <line x1={ox + outW + 7} y1={oy} x2={ox + outW + 7} y2={oy + outH} stroke="#5a4e50" strokeWidth={0.5} />
-        <line x1={ox + outW + 5} y1={oy}       x2={ox + outW + 9} y2={oy}       stroke="#5a4e50" strokeWidth={0.5} />
-        <line x1={ox + outW + 5} y1={oy + outH} x2={ox + outW + 9} y2={oy + outH} stroke="#5a4e50" strokeWidth={0.5} />
-        <text x={ox + outW + 13} y={oy + outH / 2} textAnchor="middle" style={dimTxt}
-          transform={`rotate(90,${ox + outW + 13},${oy + outH / 2})`}>
-          {outH} см
+        <line x1={rightLineX} y1={oy} x2={rightLineX} y2={oy + outH}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <line x1={rightLineX - tick} y1={oy}        x2={rightLineX + tick} y2={oy}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <line x1={rightLineX - tick} y1={oy + outH} x2={rightLineX + tick} y2={oy + outH}
+          stroke="#5a4e50" strokeWidth={sw} />
+        <text
+          x={rightTextX} y={rightTextCY}
+          textAnchor="middle" dominantBaseline="middle"
+          transform={`rotate(90,${rightTextX},${rightTextCY})`}
+          style={dimTxt}>
+          {outH} мм
         </text>
 
         {/* Mirror label */}
-        {mirW > 4 && mirH > 4 && (
+        {mirW > fsDim * 2 && mirH > fsDim * 2 && (
           <>
-            <text x={mx + mirW / 2} y={my + mirH / 2 - 1.5}
-              textAnchor="middle" style={{ ...dimTxt, fill: '#2a2324' }}>
-              {mirW}×{mirH}
+            <text x={mx + mirW / 2} y={my + mirH / 2 - fsDim * 0.6}
+              textAnchor="middle" dominantBaseline="auto"
+              style={{ ...dimTxt, fill: '#3a3232', fontSize: fsDim * 0.85 }}>
+              {mirW}×{mirH} мм
             </text>
-            <text x={mx + mirW / 2} y={my + mirH / 2 + 3}
-              textAnchor="middle" style={{ ...noteTxt, fill: '#3a3032' }}>
+            <text x={mx + mirW / 2} y={my + mirH / 2 + fsDim * 0.8}
+              textAnchor="middle" dominantBaseline="auto"
+              style={{ ...noteTxt, fill: '#4a4040', fontSize: fsNote * 0.85 }}>
               зеркало
             </text>
           </>
         )}
 
         {/* Bottom: tile count note */}
-        <text x={vbW / 2} y={oy + outH + 13} textAnchor="middle" style={noteTxt}>
+        <text x={vbW / 2} y={oy + outH + tgap} textAnchor="middle"
+          dominantBaseline="hanging" style={noteTxt}>
           {`бордюр ${(bandArea / 1_000_000).toFixed(4)} м² → ${tiles} плиток`}
         </text>
       </svg>

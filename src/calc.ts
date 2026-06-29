@@ -1,6 +1,8 @@
 import type { OrderParams, Settings } from './state';
 
 export interface Geometry {
+  mirW: number;        // mm - computed from outer size, frames, tile rows
+  mirH: number;        // mm - computed
   mirArea: number;
   baseArea: number;
   perimOut: number;
@@ -31,29 +33,34 @@ export interface CostResult {
 }
 
 export function calcGeometry(params: OrderParams, settings: Settings): Geometry {
-  // outW/outH/mirW/mirH are in mm; frameOut/frameIn already in mm
   const fo = settings.frameOut;  // mm
   const fi = settings.frameIn;   // mm
+  const tileWmm = settings.tileW * 10;  // cm → mm
+  const tileHmm = settings.tileH * 10;  // cm → mm
 
-  const mirArea  = (params.mirW * params.mirH) / 1_000_000;    // mm² → m²
-  const baseArea = (params.outW * params.outH) / 1_000_000;    // mm² → m²
-  const perimOut = 2 * (params.outW + params.outH) / 1000;     // mm → m
-  const perimIn  = 2 * (params.mirW + params.mirH) / 1000;     // mm → m
+  // Mirror size is derived: outer size minus both frames and tile rows on each side.
+  // Inner frame snaps exactly to the tile grid edge.
+  const mirW = Math.max(0, params.outW - 2 * fo - 2 * params.tileRows * tileWmm - 2 * fi);
+  const mirH = Math.max(0, params.outH - 2 * fo - 2 * params.tileRows * tileHmm - 2 * fi);
+
+  const mirArea  = (mirW * mirH) / 1_000_000;               // mm² → m²
+  const baseArea = (params.outW * params.outH) / 1_000_000; // mm² → m²
+  const perimOut = 2 * (params.outW + params.outH) / 1000;  // mm → m
+  const perimIn  = 2 * (mirW + mirH) / 1000;                // mm → m
 
   // Band dimensions in mm
   const bandOuterW = Math.max(0, params.outW - 2 * fo);
   const bandOuterH = Math.max(0, params.outH - 2 * fo);
-  const bandInnerW = params.mirW + 2 * fi;
-  const bandInnerH = params.mirH + 2 * fi;
-  const bandArea = Math.max(0, bandOuterW * bandOuterH - bandInnerW * bandInnerH); // mm²
+  const bandInnerW = mirW + 2 * fi;
+  const bandInnerH = mirH + 2 * fi;
+  const bandArea   = Math.max(0, bandOuterW * bandOuterH - bandInnerW * bandInnerH); // mm²
 
-  // tileW/tileH are in cm → convert to mm for area comparison
-  const tileAreaMm2 = settings.tileW * settings.tileH * 100;   // cm² → mm²
-  const autoTiles = tileAreaMm2 > 0 ? Math.ceil(bandArea / tileAreaMm2) : 0;
-  const tiles = params.tileMode === 'auto' ? autoTiles : params.tilesManual;
+  const tileAreaMm2 = tileWmm * tileHmm;
+  const autoTiles   = tileAreaMm2 > 0 ? Math.ceil(bandArea / tileAreaMm2) : 0;
+  const tiles       = autoTiles;
 
   return {
-    mirArea, baseArea, perimOut, perimIn, fo, fi,
+    mirW, mirH, mirArea, baseArea, perimOut, perimIn, fo, fi,
     bandOuterW, bandOuterH, bandInnerW, bandInnerH,
     bandArea, autoTiles, tiles,
   };
@@ -69,6 +76,7 @@ export function calcCost(
     'Плитка декор':   geom.tiles    * settings.pTile,
     'Багет наружный': geom.perimOut * settings.pBagOut,
     'Багет внутр.':   geom.perimIn  * settings.pBagIn,
+    'Еврокромка':     geom.perimIn  * settings.pEuroEdge,
     'Основа':         geom.baseArea * settings.pBase,
     'Краска':         settings.pPaint,
     'Клей':           settings.pGlue,

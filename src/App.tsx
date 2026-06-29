@@ -25,20 +25,6 @@ export default function App() {
 
   useEffect(() => () => clearTimeout(saveTimer.current), [])
 
-  // When outer size changes, scale mirror proportionally so the diagram stays meaningful
-  const handleParamsChange = useCallback((next: OrderParams) => {
-    let updated = next
-    if (next.outW !== params.outW && params.outW > 0) {
-      const ratio = params.mirW / params.outW
-      updated = { ...updated, mirW: Math.max(1, Math.round(next.outW * ratio)) }
-    }
-    if (next.outH !== params.outH && params.outH > 0) {
-      const ratio = params.mirH / params.outH
-      updated = { ...updated, mirH: Math.max(1, Math.round(next.outH * ratio)) }
-    }
-    setParams(updated)
-  }, [params])
-
   const geom = calcGeometry(params, settings)
   const cost = calcCost(params, settings, geom)
 
@@ -89,7 +75,7 @@ export default function App() {
       <div className="app-grid">
         {/* LEFT */}
         <div>
-          <ParamsPanel params={params} settings={settings} geom={geom} onChange={handleParamsChange} />
+          <ParamsPanel params={params} settings={settings} geom={geom} onChange={setParams} />
           <SettingsPanel settings={settings} onChange={updateSettings} />
         </div>
 
