@@ -1,5 +1,8 @@
 import type { OrderParams, Settings } from './state';
 
+// Baguette (moulding) is sold as whole sticks; each stick is this long.
+export const BAGUETTE_STICK_M = 2;
+
 export interface Geometry {
   mirW: number;        // mm - computed from outer size, frames, tile rows
   mirH: number;        // mm - computed
@@ -16,6 +19,8 @@ export interface Geometry {
   bandArea: number;
   autoTiles: number;
   tiles: number;
+  bagOutPcs: number;   // whole 2 m sticks needed for the outer frame
+  bagInPcs: number;    // whole 2 m sticks needed for the inner frame
 }
 
 export interface CostResult {
@@ -59,10 +64,14 @@ export function calcGeometry(params: OrderParams, settings: Settings): Geometry 
   const autoTiles   = tileAreaMm2 > 0 ? Math.ceil(bandArea / tileAreaMm2) : 0;
   const tiles       = autoTiles;
 
+  // Baguette is bought in whole 2 m sticks — round each frame's length up.
+  const bagOutPcs = Math.ceil(perimOut / BAGUETTE_STICK_M);
+  const bagInPcs  = Math.ceil(perimIn  / BAGUETTE_STICK_M);
+
   return {
     mirW, mirH, mirArea, baseArea, perimOut, perimIn, fo, fi,
     bandOuterW, bandOuterH, bandInnerW, bandInnerH,
-    bandArea, autoTiles, tiles,
+    bandArea, autoTiles, tiles, bagOutPcs, bagInPcs,
   };
 }
 
@@ -74,8 +83,8 @@ export function calcCost(
   const mat: Record<string, number> = {
     'Зеркало':        geom.mirArea  * settings.pMirror,
     'Плитка декор':   geom.tiles    * settings.pTile,
-    'Багет наружный': geom.perimOut * settings.pBagOut,
-    'Багет внутр.':   geom.perimIn  * settings.pBagIn,
+    'Багет наружный': geom.bagOutPcs * settings.pBagOut,
+    'Багет внутр.':   geom.bagInPcs  * settings.pBagIn,
     'Еврокромка':     geom.perimIn  * settings.pEuroEdge,
     'Основа':         geom.baseArea * settings.pBase,
     'Краска':         settings.pPaint,

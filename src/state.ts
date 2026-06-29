@@ -9,8 +9,8 @@ export interface OrderParams {
 export interface Settings {
   pMirror: number;   // ₸/m²
   pTile: number;     // ₸/pc
-  pBagOut: number;   // ₸/lin.m
-  pBagIn: number;    // ₸/lin.m
+  pBagOut: number;   // ₸/stick (2 m)
+  pBagIn: number;    // ₸/stick (2 m)
   pEuroEdge: number; // ₸/lin.m
   pBase: number;     // ₸/m²
   pPaint: number;    // ₸ flat
@@ -38,8 +38,8 @@ export const DEFAULT_PARAMS: OrderParams = {
 export const DEFAULT_SETTINGS: Settings = {
   pMirror: 7000,
   pTile: 800,
-  pBagOut: 1500,
-  pBagIn: 700,
+  pBagOut: 3000,
+  pBagIn: 1400,
   pEuroEdge: 500,
   pBase: 2500,
   pPaint: 600,

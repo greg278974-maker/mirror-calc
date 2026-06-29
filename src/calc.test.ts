@@ -89,6 +89,21 @@ describe('calcGeometry', () => {
     expect(g.fo).toBeCloseTo(50); // frameOut=50mm
     expect(g.fi).toBeCloseTo(20); // frameIn=20mm
   });
+
+  it('counts baguette in whole 2 m sticks (ceil of perimeter / 2)', () => {
+    const g = calcGeometry(P, S);
+    // perimOut = 2.4 m → ceil(2.4/2) = 2 sticks
+    expect(g.bagOutPcs).toBe(2);
+    // perimIn = 1.04 m → ceil(1.04/2) = 1 stick
+    expect(g.bagInPcs).toBe(1);
+  });
+
+  it('needs zero inner sticks when mirror collapses to 0', () => {
+    const params: OrderParams = { ...P, tileRows: 3 };
+    const g = calcGeometry(params, S);
+    expect(g.perimIn).toBe(0);
+    expect(g.bagInPcs).toBe(0);
+  });
 });
 
 describe('calcCost', () => {
@@ -102,6 +117,13 @@ describe('calcCost', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
     expect(r.mat['Плитка декор']).toBeCloseTo(g.tiles * S.pTile);
+  });
+
+  it('prices baguette per stick, not per metre', () => {
+    const g = calcGeometry(P, S);
+    const r = calcCost(P, S, g);
+    expect(r.mat['Багет наружный']).toBeCloseTo(g.bagOutPcs * S.pBagOut);
+    expect(r.mat['Багет внутр.']).toBeCloseTo(g.bagInPcs * S.pBagIn);
   });
 
   it('adds waste percentage to materials', () => {

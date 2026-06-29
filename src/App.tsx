@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { DEFAULT_SETTINGS, type OrderParams, type Settings } from './state'
+import { type OrderParams, type Settings } from './state'
 import { calcGeometry, calcCost } from './calc'
 import { buildClientQuote } from './clientQuote'
 import { loadSettings, saveSettings, loadParams, saveParams } from './storage'
@@ -27,10 +27,6 @@ export default function App() {
     clearTimeout(paramsTimer.current)
     paramsTimer.current = setTimeout(() => saveParams(next), 400)
   }, [])
-
-  const resetSettings = useCallback(() => {
-    updateSettings({ ...DEFAULT_SETTINGS })
-  }, [updateSettings])
 
   useEffect(() => () => {
     clearTimeout(saveTimer.current)
@@ -65,26 +61,6 @@ export default function App() {
             </div>
           </div>
         </div>
-        <button
-          onClick={resetSettings}
-          style={{
-            background: 'none', border: '1px solid var(--line)', color: 'var(--muted)',
-            font: 'inherit', fontSize: 12, padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
-            transition: 'border-color .15s, color .15s',
-          }}
-          onMouseEnter={e => {
-            const el = e.currentTarget
-            el.style.borderColor = 'var(--wine-soft)'
-            el.style.color = 'var(--ink)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget
-            el.style.borderColor = 'var(--line)'
-            el.style.color = 'var(--muted)'
-          }}
-        >
-          Сбросить цены
-        </button>
       </header>
 
       <div className="app-grid">
