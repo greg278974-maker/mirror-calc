@@ -1,17 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { DEFAULT_PARAMS, DEFAULT_SETTINGS, type OrderParams, type Settings } from './state'
+import { DEFAULT_SETTINGS, type OrderParams, type Settings } from './state'
 import { calcGeometry, calcCost } from './calc'
-import { loadSettings, saveSettings } from './storage'
+import { loadSettings, saveSettings, loadParams, saveParams } from './storage'
 import { ParamsPanel } from './components/ParamsPanel'
 import { SettingsPanel } from './components/SettingsPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { MirrorDiagram } from './components/MirrorDiagram'
 
 export default function App() {
-  const [params, setParams] = useState<OrderParams>(DEFAULT_PARAMS)
+  const [params, setParams] = useState<OrderParams>(loadParams)
   const [settings, setSettings] = useState<Settings>(loadSettings)
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const paramsTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const updateSettings = useCallback((next: Settings) => {
     setSettings(next)
@@ -19,11 +20,20 @@ export default function App() {
     saveTimer.current = setTimeout(() => saveSettings(next), 400)
   }, [])
 
+  const updateParams = useCallback((next: OrderParams) => {
+    setParams(next)
+    clearTimeout(paramsTimer.current)
+    paramsTimer.current = setTimeout(() => saveParams(next), 400)
+  }, [])
+
   const resetSettings = useCallback(() => {
     updateSettings({ ...DEFAULT_SETTINGS })
   }, [updateSettings])
 
-  useEffect(() => () => clearTimeout(saveTimer.current), [])
+  useEffect(() => () => {
+    clearTimeout(saveTimer.current)
+    clearTimeout(paramsTimer.current)
+  }, [])
 
   const geom = calcGeometry(params, settings)
   const cost = calcCost(params, settings, geom)
@@ -75,7 +85,7 @@ export default function App() {
       <div className="app-grid">
         {/* LEFT */}
         <div>
-          <ParamsPanel params={params} settings={settings} geom={geom} onChange={setParams} />
+          <ParamsPanel params={params} settings={settings} geom={geom} onChange={updateParams} />
           <SettingsPanel settings={settings} onChange={updateSettings} />
         </div>
 
