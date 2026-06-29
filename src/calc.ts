@@ -81,7 +81,11 @@ export function calcCost(
   settings: Settings,
   geom: Geometry,
 ): CostResult {
-  const mat: Record<string, number> = {
+  // Everything is computed in whole tenge (rounded at each accumulation point) so
+  // that every subtotal shown in the UI and the PDF reconciles exactly — line
+  // items sum to their subtotal, Материалы + Запас = Себестоимость, and so on.
+  const rub = Math.round;
+  const matExact: Record<string, number> = {
     'Зеркало':        geom.mirArea  * settings.pMirror,
     'Плитка декор':   geom.tiles    * settings.pTile,
     'Багет наружный': geom.bagOutPcs * settings.pBagOut,
@@ -93,17 +97,19 @@ export function calcCost(
     'Крепёж':         settings.pMount,
     'Расходники':     settings.pMisc,
   };
+  const mat: Record<string, number> = {};
+  for (const [k, v] of Object.entries(matExact)) mat[k] = rub(v);
 
   const matSub = Object.values(mat).reduce((a, b) => a + b, 0);
-  const wasteAmt = matSub * settings.wastePct / 100;
+  const wasteAmt = rub(matSub * settings.wastePct / 100);
   const productCost = matSub + wasteAmt;
-  const productClient = productCost * (1 + settings.markupPct / 100);
+  const productClient = rub(productCost * (1 + settings.markupPct / 100));
 
   // Labour: flat per-order base plus a rate per m² of panel area.
-  const work = settings.pWorkBase + geom.baseArea * settings.pWorkM2;
+  const work = rub(settings.pWorkBase + geom.baseArea * settings.pWorkM2);
 
-  const delivery = params.inclDeliv ? settings.pDeliv : 0;
-  const montage  = params.inclInst  ? settings.pInst  : 0;
+  const delivery = params.inclDeliv ? rub(settings.pDeliv) : 0;
+  const montage  = params.inclInst  ? rub(settings.pInst)  : 0;
   const totalClient = productClient + work + delivery + montage;
 
   const profit = productClient - productCost;

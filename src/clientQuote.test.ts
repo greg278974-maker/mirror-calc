@@ -24,12 +24,14 @@ describe('buildClientQuote', () => {
     const factor = (1 + S.wastePct / 100) * (1 + S.markupPct / 100);
     const mirrorLine = q.lines.find(l => l.name === 'Зеркало');
     expect(mirrorLine).toBeDefined();
-    expect(mirrorLine!.amount).toBeCloseTo(c.mat['Зеркало'] * factor, 0);
+    // Allocation may shift a single line by at most 1 ₸ from its raw value.
+    expect(Math.abs(mirrorLine!.amount - c.mat['Зеркало'] * factor)).toBeLessThanOrEqual(1);
+    expect(mirrorLine!.amount).toBeGreaterThan(c.mat['Зеркало']);
   });
 
-  it('productClient is close to cost.productClient (rounding aside)', () => {
+  it('productClient equals the app productClient, rounded', () => {
     const { q, c } = quote();
-    expect(Math.abs(q.productClient - c.productClient)).toBeLessThan(q.lines.length + 1);
+    expect(q.productClient).toBe(Math.round(c.productClient));
   });
 
   it('drops zero-cost material lines', () => {
@@ -49,12 +51,13 @@ describe('buildClientQuote', () => {
     expect(q.lines.some(l => l.name === 'Еврокромка')).toBe(true);
   });
 
-  it('total = productClient + work + delivery + montage', () => {
+  it('total and К оплате match the engine', () => {
     const params: OrderParams = { ...P, inclDeliv: true, inclInst: true };
-    const { q } = quote(params);
+    const { q, c } = quote(params);
     expect(q.delivery).toBe(S.pDeliv);
     expect(q.montage).toBe(S.pInst);
-    expect(q.total).toBe(q.productClient + q.work + q.delivery + q.montage);
+    expect(q.total).toBe(Math.round(c.totalClient));
+    expect(q.totalRounded).toBe(c.totalRounded);
   });
 
   it('includes labour from cost in the quote', () => {

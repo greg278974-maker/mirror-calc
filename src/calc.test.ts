@@ -107,42 +107,57 @@ describe('calcGeometry', () => {
 });
 
 describe('calcCost', () => {
-  it('computes material cost for mirror', () => {
+  it('computes material cost for mirror (whole tenge)', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.mat['Зеркало']).toBeCloseTo(g.mirArea * S.pMirror);
+    expect(r.mat['Зеркало']).toBe(Math.round(g.mirArea * S.pMirror));
   });
 
   it('computes tile cost', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.mat['Плитка декор']).toBeCloseTo(g.tiles * S.pTile);
+    expect(r.mat['Плитка декор']).toBe(Math.round(g.tiles * S.pTile));
   });
 
   it('prices baguette per stick, not per metre', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.mat['Багет наружный']).toBeCloseTo(g.bagOutPcs * S.pBagOut);
-    expect(r.mat['Багет внутр.']).toBeCloseTo(g.bagInPcs * S.pBagIn);
+    expect(r.mat['Багет наружный']).toBe(Math.round(g.bagOutPcs * S.pBagOut));
+    expect(r.mat['Багет внутр.']).toBe(Math.round(g.bagInPcs * S.pBagIn));
+  });
+
+  it('all money is whole tenge and subtotals reconcile', () => {
+    const g = calcGeometry(P, S);
+    const r = calcCost(P, S, g);
+    // Every material line is an integer and they sum to matSub.
+    const lineSum = Object.values(r.mat).reduce((a, b) => a + b, 0);
+    Object.values(r.mat).forEach(v => expect(Number.isInteger(v)).toBe(true));
+    expect(lineSum).toBe(r.matSub);
+    // Материалы + Запас = Себестоимость, exactly.
+    expect(r.productCost).toBe(r.matSub + r.wasteAmt);
+    // Pieces sum to the client total, exactly.
+    expect(r.totalClient).toBe(r.productClient + r.work + r.delivery + r.montage);
+    [r.matSub, r.wasteAmt, r.productCost, r.productClient, r.work, r.totalClient]
+      .forEach(v => expect(Number.isInteger(v)).toBe(true));
   });
 
   it('adds waste percentage to materials', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.wasteAmt).toBeCloseTo(r.matSub * S.wastePct / 100);
-    expect(r.productCost).toBeCloseTo(r.matSub + r.wasteAmt);
+    expect(r.wasteAmt).toBe(Math.round(r.matSub * S.wastePct / 100));
+    expect(r.productCost).toBe(r.matSub + r.wasteAmt);
   });
 
   it('applies markup to get client product price', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.productClient).toBeCloseTo(r.productCost * (1 + S.markupPct / 100));
+    expect(r.productClient).toBe(Math.round(r.productCost * (1 + S.markupPct / 100)));
   });
 
   it('computes labour as base + area rate', () => {
     const g = calcGeometry(P, S);
     const r = calcCost(P, S, g);
-    expect(r.work).toBeCloseTo(S.pWorkBase + g.baseArea * S.pWorkM2);
+    expect(r.work).toBe(Math.round(S.pWorkBase + g.baseArea * S.pWorkM2));
   });
 
   it('includes labour in totalClient', () => {

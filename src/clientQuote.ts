@@ -10,19 +10,40 @@ export interface ClientQuote {
   outerSize: string;   // "600×600 мм"
   mirrorSize: string;  // "260×260 мм"
   lines: QuoteLine[];  // materials at client price, zero lines dropped
-  productClient: number; // sum of line amounts ("Изделие")
+  productClient: number; // "Изделие" — equals the app's rounded productClient
   work: number;
   delivery: number;
   montage: number;
-  total: number;        // productClient + work + delivery + montage
-  totalRounded: number; // total rounded up to nearest 500 ₸
+  total: number;        // exact total (round of cost.totalClient); not shown in the PDF
+  totalRounded: number; // "К оплате" — equals the app's с округлением exactly
 }
 
 /**
- * Build the client-facing quote. Material costs are stored internally at cost;
- * here each line is scaled by the waste+markup factor so the figures shown to the
- * client carry the markup and sum exactly to the client product price. Cost,
- * profit and margin never appear in the returned data.
+ * Spread `target` whole tenge across `items` (weighted by their exact value)
+ * using the largest-remainder method, so the integer lines sum *exactly* to
+ * target. This keeps the printed column reconciled to the subtotal without any
+ * per-line rounding drift.
+ */
+function allocate(items: { name: string; value: number }[], target: number): QuoteLine[] {
+  const parts = items.map(it => {
+    const floor = Math.floor(it.value);
+    return { name: it.name, amount: floor, frac: it.value - floor };
+  });
+  let rem = target - parts.reduce((a, p) => a + p.amount, 0);
+  const order = parts.map((_, i) => i).sort((a, b) => parts[b].frac - parts[a].frac);
+  for (let k = 0; rem > 0 && k < order.length; k++, rem--) parts[order[k]].amount += 1;
+  // Safety: never leave the subtotal unmet even under float edge cases.
+  if (rem > 0 && order.length) parts[order[0]].amount += rem;
+  return parts.map(p => ({ name: p.name, amount: p.amount }));
+}
+
+/**
+ * Build the client-facing quote as a *presentation* of the engine's numbers — it
+ * must never disagree with what the app shows the owner. Material costs are stored
+ * at cost; each line is scaled by the waste+markup factor and the rounding is
+ * allocated so the lines sum exactly to the app's productClient ("Изделие").
+ * "К оплате" reuses the engine's totalRounded so it always equals the app's
+ * "с округлением". Cost, profit and margin never appear in the returned data.
  */
 export function buildClientQuote(
   params: OrderParams,
@@ -32,17 +53,19 @@ export function buildClientQuote(
 ): ClientQuote {
   const factor = (1 + settings.wastePct / 100) * (1 + settings.markupPct / 100);
 
-  const lines: QuoteLine[] = Object.entries(cost.mat)
+  const items = Object.entries(cost.mat)
     .filter(([, amt]) => amt > 0)
-    .map(([name, amt]) => ({ name, amount: Math.round(amt * factor) }));
+    .map(([name, amt]) => ({ name, value: amt * factor }));
 
-  // Subtotal is the sum of the rounded lines so the printed column reconciles.
-  const productClient = lines.reduce((a, l) => a + l.amount, 0);
+  // "Изделие" is the app's productClient, rounded once; lines are allocated to it.
+  const productClient = Math.round(cost.productClient);
+  const lines = allocate(items, productClient);
+
   const work = Math.round(cost.work);
-  const delivery = cost.delivery;
-  const montage = cost.montage;
-  const total = productClient + work + delivery + montage;
-  const totalRounded = Math.ceil(total / 500) * 500;
+  const delivery = Math.round(cost.delivery);
+  const montage = Math.round(cost.montage);
+  const total = Math.round(cost.totalClient);
+  const totalRounded = cost.totalRounded; // identical to the app's с округлением
 
   return {
     outerSize: `${params.outW}×${params.outH} мм`,
