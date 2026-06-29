@@ -162,23 +162,27 @@ export async function exportClientPdf(
   doc.text(fmtMoney(quote.totalRounded), right - 4, y + 8.5, { align: 'right' });
   y += 13 + 10;
 
-  // Diagram
+  // Diagram — its own full page, as large as fits
   if (svg) {
     try {
-      const png = await svgToPng(svg);
-      const maxW = right - M;
-      const maxH = 297 - M - y; // remaining space to bottom margin
-      const ratio = png.h / png.w;
-      let drawW = maxW;
-      let drawH = drawW * ratio;
-      if (drawH > maxH) { drawH = maxH; drawW = drawH / ratio; }
-      const x = M + (maxW - drawW) / 2;
+      const png = await svgToPng(svg, 3);
+      doc.addPage();
+      const PW = 210, PH = 297, m2 = 14;
       doc.setFont('Roboto', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(140, 140, 140);
-      doc.text('СХЕМА ИЗДЕЛИЯ', M, y);
-      y += 4;
-      doc.addImage(png.url, 'PNG', x, y, drawW, drawH);
+      doc.setFontSize(14);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Схема изделия', m2, m2 + 4);
+
+      const top = m2 + 10;
+      const availW = PW - 2 * m2;
+      const availH = PH - top - m2;
+      const ratio = png.h / png.w;
+      let drawW = availW;
+      let drawH = drawW * ratio;
+      if (drawH > availH) { drawH = availH; drawW = drawH / ratio; }
+      const x = (PW - drawW) / 2;
+      const yImg = top + (availH - drawH) / 2;
+      doc.addImage(png.url, 'PNG', x, yImg, drawW, drawH);
     } catch {
       // diagram is optional — skip silently if rasterization fails
     }

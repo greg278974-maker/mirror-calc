@@ -8,7 +8,7 @@ interface Props {
   svgRef?: React.Ref<SVGSVGElement>
 }
 
-const PAD = 40    // annotation margin in mm (SVG units = mm)
+const PAD = 60    // annotation margin in mm (SVG units = mm)
 const JOINT = 2   // tile grout width in mm
 
 export function MirrorDiagram({ params, settings, geom, svgRef }: Props) {
@@ -62,15 +62,15 @@ export function MirrorDiagram({ params, settings, geom, svgRef }: Props) {
     }
   }
 
-  // Proportional annotation sizes — capped so they fit within PAD=40
-  const ann  = Math.min(Math.min(outW, outH) * 0.028, 26)  // base unit ~17 for 600mm panel
-  const sw   = Math.max(ann * 0.12, 1)   // stroke width ~2
-  const lgap = ann * 0.5                 // distance from panel edge to dim line
-  const tick = ann * 0.35                // half-tick length
-  const tgap = ann * 0.75               // distance from panel to text (top/bottom)
-  const rgap = ann * 1.1                // distance from panel right to rotated text centre
-  const fsDim  = ann                    // main annotation font size
-  const fsNote = ann * 0.75             // note font size
+  // Proportional annotation sizes — capped so they fit within PAD
+  const ann  = Math.min(Math.min(outW, outH) * 0.05, 44)  // base unit ~30 for 600mm panel
+  const sw   = Math.max(ann * 0.1, 1.4)  // stroke width ~3
+  const lgap = ann * 0.55                // distance from panel edge to dim line
+  const tick = ann * 0.4                 // half-tick length
+  const tgap = ann * 0.85                // distance from panel to text (top/bottom)
+  const rgap = ann * 1.0                 // distance from panel right to rotated text centre
+  const fsDim  = ann                     // main annotation font size
+  const fsNote = ann * 0.72              // note font size
 
   const dimTxt: React.CSSProperties = {
     fill: '#f3ece9', fontSize: fsDim, fontFamily: 'ui-monospace, monospace', fontWeight: 600,
@@ -115,6 +115,13 @@ export function MirrorDiagram({ params, settings, geom, svgRef }: Props) {
             <stop offset="0%" stopColor="#cdd3d6" />
             <stop offset="100%" stopColor="#9aa3a7" />
           </linearGradient>
+
+          {/* soft diagonal glass sheen */}
+          <linearGradient id="mir-glare" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0.36" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="0.5"  stopColor="#ffffff" stopOpacity="0.16" />
+            <stop offset="0.64" stopColor="#ffffff" stopOpacity="0" />
+          </linearGradient>
         </defs>
 
         {/* Dark panel background */}
@@ -148,9 +155,7 @@ export function MirrorDiagram({ params, settings, geom, svgRef }: Props) {
         {mirW > 0 && mirH > 0 && (
           <>
             <rect x={mx} y={my} width={mirW} height={mirH} fill="url(#mir-grad)" />
-            <rect x={mx + mirW * 0.12} y={my + mirH * 0.1}
-              width={mirW * 0.28} height={mirH * 0.04}
-              fill="rgba(255,255,255,0.22)" rx={1} />
+            <rect x={mx} y={my} width={mirW} height={mirH} fill="url(#mir-glare)" />
           </>
         )}
 
